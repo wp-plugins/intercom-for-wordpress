@@ -213,13 +213,6 @@ class lumpyIntercom {
 		$tick = plugins_url( '/i/tick.png', __FILE__ );
 		$warn = plugins_url( '/i/warning.png', __FILE__ );
 
-		$user_count = count_users();
-		$num_users = $user_count['total_users'];
-		if ( 1 < $num_users ) {
-			$message = 'Your site has ' . $num_users . ' registered users, so upgrading to the premium version of Intercom CRM for WordPress will help you track and build even better relationships with them.';
-		} else {
-			$message = 'Get even more out of Intercom and WordPress with the premium version of this plugin.';
-		}
 		?>
 
 		<div class="wrap">
@@ -243,8 +236,8 @@ class lumpyIntercom {
 					<div class="postbox ll-intercom-info" id="ll-intercom-support">
 						<h3 class="hndle"><span>Need Help?</span></h3>
 						<div class="inside">
-							<p>If something's not working, the first step is to read the <a href="#">FAQ</a>.</p>
-							<p>If your question is not answered there, please check the official <a href="#">support forum</a>.</p>
+							<p>If something's not working, the first step is to read the <a href="http://wordpress.org/extend/plugins/intercom-for-wordpress/faq/">FAQ</a>.</p>
+							<p>If your question is not answered there, please check the official <a href="http://wordpress.org/tags/intercom-for-wordpress?forum_id=10">support forum</a>.</p>
 						</div>
 					</div>
 				</div>

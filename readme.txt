@@ -10,11 +10,11 @@ Easy integration of the Intercom CRM and messaging app into your WordPress websi
 
 == Description ==
 
-Intercom [http://intercom.io](http://intercom.io) is a customer relationship management (CRM) and messaging tool for web app owners. WordPress is being widely used as a web app nowadays, so Intercom is an ideal companion app to find out more about your users, contact them, get their instant feedback, and track your relationship with them over time so you can spot those who need attention.
+[Intercom](http://intercom.io) is a customer relationship management (CRM) and messaging tool for web app owners. WordPress is being widely used as a web app nowadays, so Intercom is an ideal companion app to find out more about your users, contact them, get their instant feedback, and track your relationship with them over time so you can spot those who need attention.
 
-This plugin generates the Javascript snippet that will integrate all of this functionality into your WordPress-powered web app.
+This plugin generates the Javascript snippet to integrate all of this functionality into your WordPress-powered web app.
 
-It allows you to securely connect to Intercom using secure mode, and you can optionally send extra custom data about your users.
+It allows you to securely connect to Intercom using secure key authentication mode, and you can optionally send extra custom data about your users.
 
 == Frequently Asked Questions ==
 
