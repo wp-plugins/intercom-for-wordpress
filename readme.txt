@@ -48,7 +48,7 @@ Possibly, but I've not tried. I can't provide support if you're using WordPress 
 
 == Installation ==
 
-1. Unzip intercom-crm-for-wordpress.zip and upload the folder and its files to your wp-content/plugins directory.
+1. Unzip intercom-for-wordpress.zip and upload the folder and its files to your wp-content/plugins directory.
 2. Activate the plugin through the Plugins menu in WordPress.
 3. Go to the settings page.
 4. Enter your Intercom App ID.
