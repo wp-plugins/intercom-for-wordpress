@@ -5,7 +5,7 @@ Plugin URI: http://lumpylemon.co.uk/plugins/intercom-crm-for-wordpress
 Description: Integrate the <a href="http://intercom.io">Intercom</a> CRM and messaging app into your WordPress website.
 Author: Simon Blackbourn
 Author URI: http://lumpylemon.co.uk
-Version: 0.3
+Version: 0.3.1
 
 
 
@@ -51,7 +51,7 @@ Version: 0.3
 
 
 
-define( 'LL_INTERCOM_VERSION', '0.3' );
+define( 'LL_INTERCOM_VERSION', '0.3.1' );
 
 
 
@@ -85,19 +85,6 @@ class lumpyIntercom {
 
 		$role = get_role( 'administrator' );
 		$role->add_cap( 'hide_from_intercom' );
-
-		// if the options are not set, then set some useful defaults
-
-		$opts = self::get_settings();
-
-		if ( false === $opts ) {
-			$defaults = array(
-							'username'       => 'firstlast',
-							'send-user-id'   => 1,
-							'send-user-role' => 1
-							);
-			self::update_settings( $defaults );
-		}
 
 	}
 
@@ -158,7 +145,7 @@ class lumpyIntercom {
 	 */
 	function update_settings( $opts ) {
 
-		if ( self::is_network_active() ) {
+		if ( is_network_admin() ) {
 			update_site_option( 'll-intercom', $opts );
 		} else {
 			update_option( 'll-intercom', $opts );
@@ -361,7 +348,6 @@ class lumpyIntercom {
 			<form method="post" action="<?php echo $action; ?>">
 
 				<?php settings_fields( 'intercom' ); ?>
-				<?php // do_settings_sections( 'intercom' ); ?>
 
 				<table class="form-table">
 					<tbody>
@@ -476,15 +462,14 @@ class lumpyIntercom {
 	function settings_init() {
 
 		register_setting( 'intercom', 'll-intercom', array( $this, 'validate' ) );
-
-		if ( isset( $_REQUEST['_wpnonce'] ) and wp_verify_nonce( $_REQUEST['_wpnonce'], 'intercom' ) ) {
+		if ( isset( $_REQUEST['_wpnonce'] ) and wp_verify_nonce( $_REQUEST['_wpnonce'], 'intercom-options' ) ) {
 
 			$file = is_network_admin() ? 'settings.php' : 'options-general.php';
 
 			if ( isset( $_POST['ll-intercom-submit'] ) and is_network_admin() ) {
 				$opts = self::validate( $_POST['ll-intercom'] );
 				self::update_settings( $opts );
-				wp_redirect( add_query_var( array(
+				wp_redirect( add_query_arg( array(
 												'page' => 'intercom',
 												'updated' => true
 												), $file ) );

@@ -53,6 +53,10 @@ Possibly, but I've not tried. I can only provide support if you're using WordPre
 
 == Changelog ==
 
+= 0.3.1 =
+* Fix Multisite network-activated options saving bug
+* Remove default options
+
 = 0.3 =
 * Fix kses missing arguments bug
 * Multisite-compatible options page
