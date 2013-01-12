@@ -1,36 +1,57 @@
-<?php 
+<?php
 /*
 Plugin Name: Intercom for WordPress
 Plugin URI: http://lumpylemon.co.uk/plugins/intercom-crm-for-wordpress
-Description: Integrates the <a href="http://intercom.io">Intercom</a> CRM and messaging app into your WordPress website.
+Description: Integrate the <a href="http://intercom.io">Intercom</a> CRM and messaging app into your WordPress website.
 Author: Simon Blackbourn
 Author URI: http://lumpylemon.co.uk
-Version: 0.1
+Version: 0.3
 
 
+
+	-----------
+	description
+	-----------
+
+	Intercom is a customer relationship management (CRM) and messaging tool for web app owners. WordPress is being widely used as a web app nowadays, so Intercom is an ideal companion app to find out more about your users, contact them, get their instant feedback, and track your relationship with them over time so you can spot those who need attention.
+
+	This plugin generates the Javascript install code to integrate all of this functionality into your WordPress-powered web app.
+
+	It allows you to securely connect to Intercom using secure key authentication mode, and you can optionally send extra custom data about your users.
+
+
+
+	-------
+	license
+	-------
 
 	This is a plugin for WordPress (http://wordpress.org).
 
-	Released under the GPL license:
-	http://www.opensource.org/licenses/gpl-license.php
+	Copyright Simon Blackbourn (simon@lumpylemon.co.uk)
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
+	Released under the GPL license: http://www.opensource.org/licenses/gpl-license.php
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
-	Copyright 2012 Simon Blackbourn (simon@lumpylemon.co.uk)
+	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+
+
+	--------
+	about me
+	--------
+
+	I'm Simon Blackbourn, co-founder of Lumpy Lemon, a small & friendly UK-based WordPress design & development company specialising in custom-built WordPress CMS sites. I work mainly, but not exclusively, with not-for-profit organisations.
+
+	Find me on Twitter, Skype & GitHub: lumpysimon
+
+
 
 */
 
 
 
-define( 'LL_INTERCOM_VERSION', '0.1' );
+define( 'LL_INTERCOM_VERSION', '0.3' );
 
 
 
@@ -43,36 +64,52 @@ class lumpyIntercom {
 		register_activation_hook(   __FILE__, array( $this, 'hello'   ) );
 		register_deactivation_hook( __FILE__, array( $this, 'goodbye' ) );
 
-		add_action( 'wp_head',      array( $this, 'output_snippet'      ) );
-		add_action( 'admin_menu',   array( $this, 'create_options_page' ) );
-		add_action( 'admin_init',   array( $this, 'settings_init'       ) );
-		add_action( 'admin_footer', array( $this, 'notice'              ) );
+		add_action( 'wp_footer',             array( $this, 'output_install_code' ) );
+		add_action( 'admin_menu',            array( $this, 'create_options_page' ) );
+		add_action( 'network_admin_menu',    array( $this, 'create_options_page' ) );
+		add_action( 'admin_init',            array( $this, 'settings_init'       ) );
+		add_action( 'admin_notices',         array( $this, 'notice'              ) );
+		add_action( 'network_admin_notices', array( $this, 'notice'              ) );
 
 	}
 
 
 
+	/**
+	 * various initiation stuff when the plugin is activated
+	 * @return null
+	 */
 	function hello() {
+
+		// add the 'hide from intercom' capability to the admin user
 
 		$role = get_role( 'administrator' );
 		$role->add_cap( 'hide_from_intercom' );
 
-		$opts = get_option( 'll-intercom' );
+		// if the options are not set, then set some useful defaults
+
+		$opts = self::get_settings();
 
 		if ( false === $opts ) {
 			$defaults = array(
-							'label'          => 'Support',
 							'username'       => 'firstlast',
+							'send-user-id'   => 1,
 							'send-user-role' => 1
 							);
-			update_option( 'll-intercom', $defaults );
+			self::update_settings( $defaults );
 		}
 
 	}
 
 
 
+	/**
+	 * stuff to do when the plugin is de-activated
+	 * @return null
+	 */
 	function goodbye() {
+
+		// remove the 'hide from intercom' capability from the admin user
 
 		$role = get_role( 'administrator' );
 		$role->remove_cap( 'hide_from_intercom' );
@@ -81,8 +118,64 @@ class lumpyIntercom {
 
 
 
-	function output_snippet() {
+	/**
+	 * checks if this plugin is activated network-wide
+	 * @return boolean
+	 */
+	function is_network_active() {
 
+		if ( ! function_exists( 'is_plugin_active_for_network' ) )
+			require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+
+		if ( is_plugin_active_for_network( plugin_basename( __FILE__ ) ) )
+			return true;
+
+		return false;
+
+	}
+
+
+
+	/**
+	 * retrieves the intercom options
+	 * @return array 'll-intercom' options
+	 */
+	function get_settings() {
+
+		if ( self::is_network_active() )
+			return get_site_option( 'll-intercom' );
+
+		return get_option( 'll-intercom' );
+
+	}
+
+
+
+	/**
+	 * update the intercom options in the database
+	 * @param  array $opts new options settings to save
+	 * @return null
+	 */
+	function update_settings( $opts ) {
+
+		if ( self::is_network_active() ) {
+			update_site_option( 'll-intercom', $opts );
+		} else {
+			update_option( 'll-intercom', $opts );
+		}
+
+	}
+
+
+
+	/**
+	 * output the intercom javascript install code to the footer
+	 * @return null
+	 */
+	function output_install_code() {
+
+		// don't do anything if the current user is hidden from intercom
+		// or is not logged in
 		if ( current_user_can( 'hide_from_intercom' ) or !is_user_logged_in() )
 			return;
 
@@ -90,7 +183,10 @@ class lumpyIntercom {
 
 		get_currentuserinfo();
 
-		$opts = get_option( 'll-intercom' );
+		$opts = self::get_settings();
+
+		// if we're sending the user role as custom data then
+		// figure out the current user's role
 
 		if ( $opts['send-user-role'] ) {
 			$user = new WP_User( $current_user->ID );
@@ -102,10 +198,16 @@ class lumpyIntercom {
 			}
 		}
 
+		// if a security key has been entered
+		// then calculate the hash
+
 		$secure = false;
-		if ( isset( $opts['secure'] ) and ! empty( $opts['secure'] ) ) {
-			$secure = $opts['secure'] . $current_user->user_email;
+		if ( isset( $opts['secure'] ) and !empty( $opts['secure'] ) ) {
+			// $secure = sha1( $opts['secure'] . $current_user->user_email );
+			$secure = hash_hmac( 'sha256', $current_user->user_email, $opts['secure'] );
 		}
+
+		// set the required username format
 
 		switch ( $opts['username'] ) {
 			case 'firstlast' :
@@ -115,6 +217,8 @@ class lumpyIntercom {
 				$username = $current_user->display_name;
 			break;
 		}
+
+		// generate the custom data if required
 
 		$custom = array();
 
@@ -128,44 +232,30 @@ class lumpyIntercom {
 			$custom[] = '"Website":"' . $current_user->user_url . '"';
 		}
 
-		$out  = '<script>';
-		$out .= '//<![CDATA[' . "\n";
+		// now put everything together & generate the javascript output
+
+		$out  = '<script id="IntercomSettingsScriptTag">';
 		$out .= '// Intercom for WordPress | v' . LL_INTERCOM_VERSION . ' | http://lumpylemon.co.uk/plugins/intercom-crm-for-wordpress' . "\n";
 		$out .= 'var intercomSettings = {';
 		$out .= 'app_id:"' . esc_attr( $opts['app-id'] ) . '",';
 		$out .= 'email:"' . $current_user->user_email . '",';
 		$out .= 'name:"' . $username . '",';
-		$out .= 'created_at:"' . strtotime( $current_user->user_registered ) . '",';
+		$out .= 'created_at:' . strtotime( $current_user->user_registered ) . ',';
 		if ( $secure ) {
-			$out .= 'user_hash:"' . sha1( $secure ) . '",';
+			$out .= 'user_hash:"' . $secure . '",';
 		}
 		$out .= 'widget:{';
-		$out .= 'activator:"#IntercomDefaultWidget",';
-		$out .= 'label:"' . esc_attr( $opts['label'] ) . '"';
+		$out .= 'activator:"#IntercomDefaultWidget"';
 		$out .= '}';
-		if ( !empty( $custom ) ) {
+		if ( ! empty( $custom ) ) {
 			$out .= ',';
 			$out .= 'custom_data:{';
 			$out .= implode( ',', $custom );
 			$out .= '}';
 		}
 		$out .= '};' . "\n";
-		$out .= '(function() {';
-		$out .= 'function async_load() {';
-		$out .= 'var s = document.createElement("script");';
-		$out .= 's.type = "text/javascript"; s.async = true;';
-		$out .= 's.src = "https://api.intercom.io/api/js/library.js";';
-		$out .= 'var x = document.getElementsByTagName("script")[0];';
-		$out .= 'x.parentNode.insertBefore(s, x);';
-		$out .= '}';
-		$out .= 'if (window.attachEvent) {';
-		$out .= 'window.attachEvent("onload", async_load);';
-		$out .= '} else {';
-		$out .= 'window.addEventListener("load", async_load, false);';
-		$out .= '};';
-		$out .= '})();' . "\n";
-		$out .= '//]]>';
 		$out .= '</script>' . "\n";
+		$out .= '<script>(function(){var w=window;var d=document;var i=function(){i.c(arguments)};i.q=[];i.c=function(args){i.q.push(args)};w.Intercom=i;function l(){var s=d.createElement(\'script\');s.type=\'text/javascript\';s.async=true;s.src=\'https://api.intercom.io/api/js/library.js\';var x=d.getElementsByTagName(\'script\')[0];x.parentNode.insertBefore(s,x);}if(w.attachEvent){w.attachEvent(\'onload\',l);}else{w.addEventListener(\'load\',l,false);}})();</script>' . "\n";
 
 		echo $out;
 
@@ -173,19 +263,35 @@ class lumpyIntercom {
 
 
 
+	/**
+	 * show a 'settings saved' notice
+	 * and a friendly reminder if the app ID hasn't been entered
+	 * @return null
+	 */
 	function notice() {
 
-		if ( !current_user_can( 'hide_from_intercom' ) )
+		if ( isset( $_GET['page'] ) and ( 'intercom' == $_GET['page'] ) ) {
+
+			if ( is_network_admin() and isset( $_GET['updated'] ) ) { ?>
+				<div class="updated" id="ll-intercom-updated"><p><?php _e( 'Settings saved.' ); ?></p></div>
+				<?php
+			}
+
+		}
+
+		// show a reminder to users who can update options
+
+		if ( ! current_user_can( 'manage_options' ) )
 			return;
 
-		$opts = get_option( 'll-intercom' );
+		$opts = self::get_settings();
 
-		if ( ! isset( $opts['app-id'] ) or empty( $opts['app-id'] ) ) {
+		if ( !is_network_admin() and ( !isset( $opts['app-id'] ) or empty( $opts['app-id'] ) ) ) {
 			echo '<div class="error" id="ll-intercom-notice"><p><img src="' . $this->warning . '"> <strong>Intercom needs some attention</strong>. ';
-			if ( isset( $_GET['page'] ) and 'intercom-options' == $_GET['page'] ) {
+			if ( isset( $_GET['page'] ) and 'intercom' == $_GET['page'] ) {
 				echo 'Please enter your Intercom application ID';
 			} else {
-				echo 'Please <a href="options-general.php?page=intercom-options">configure the Intercom settings</a>';
+				echo 'Please <a href="options-general.php?page=intercom">configure the Intercom settings</a>';
 			}
 			echo ' to start tracking your users.</p></div>' . "\n";
 		}
@@ -194,40 +300,134 @@ class lumpyIntercom {
 
 
 
+	// does what it says on the tin
+
+	/**
+	 * create the relevant type of options page
+	 * depending if we're single site or network active
+	 * @return null
+	 */
 	function create_options_page() {
 
-		add_options_page(
-			'Intercom Settings',
-			'Intercom',
-			'manage_options',
-			'intercom-options',
-			array( $this, 'render_options_page' )
-			);
+		// annoyingly multisite doesn't play nicely with the settings api
+		// so we need to account for that by creating a special page
+
+		if ( self::is_network_active() ) {
+
+			add_submenu_page(
+				'settings.php',
+				'Intercom Settings',
+				'Intercom',
+				'manage_network_options',
+				'intercom',
+				array( $this, 'render_options_page' )
+				);
+
+		} else {
+
+			add_options_page(
+				'Intercom Settings',
+				'Intercom',
+				'manage_options',
+				'intercom',
+				array( $this, 'render_options_page' )
+				);
+
+		}
 
 	}
 
 
 
+	/**
+	 * generate the options page
+	 * @return null
+	 */
 	function render_options_page() {
 
-		$tick = plugins_url( '/i/tick.png', __FILE__ );
-		$warn = plugins_url( '/i/warning.png', __FILE__ );
+		$opts = self::get_settings();
+
+		$action = is_network_admin() ? 'settings.php?page=intercom' : 'options.php';
 
 		?>
 
 		<div class="wrap">
+
+		<?php screen_icon( 'options-general' ); ?>
 		<h2>Intercom for WordPress Configuration</h2>
+
 		<div class="postbox-container" style="width:65%;">
-		<form method="post" action="options.php">
-		<?php
-		settings_fields( 'intercom' );
-		do_settings_sections( 'intercom' );
-		?>
-		<p class="submit">
-			<input class="button-primary" name="Submit" type="submit" value="Save Changes">
-		</p>
-		</form>
+
+			<form method="post" action="<?php echo $action; ?>">
+
+				<?php settings_fields( 'intercom' ); ?>
+				<?php // do_settings_sections( 'intercom' ); ?>
+
+				<table class="form-table">
+					<tbody>
+
+						<tr valign="top">
+							<th scope="row">App ID</th>
+							<td>
+								<input name="ll-intercom[app-id]" type="text" value="<?php echo esc_attr( $opts['app-id'] ); ?>">
+							</td>
+						</tr>
+
+						<tr valign="top">
+							<th scope="row">Security key</th>
+							<td>
+								<input name="ll-intercom[secure]" type="text" value="<?php echo esc_attr( $opts['secure'] ); ?>">
+							</td>
+						</tr>
+
+						<tr valign="top">
+							<th scope="row">Username format</th>
+							<td>
+								<label>
+									<input name="ll-intercom[username]" type="radio" value="firstlast" <?php checked( $opts['username'], 'firstlast' ); ?>>
+									<span>First name &amp; last name</span>
+								</label>
+								<br>
+								<label>
+									<input name="ll-intercom[username]" type="radio" value="display" <?php checked( $opts['username'], 'display' ); ?>>
+									<span>Display name</span>
+								</label>
+							</td>
+						</tr>
+
+						<tr valign="top">
+							<th scope="row">Send user ID?</th>
+							<td>
+								<input name="ll-intercom[send-user-id]" type="checkbox" value="1" <?php checked( $opts['send-user-id'] ); ?>>
+							</td>
+						</tr>
+
+						<tr valign="top">
+							<th scope="row">Send user role?</th>
+							<td>
+								<input name="ll-intercom[send-user-role]" type="checkbox" value="1" <?php checked( $opts['send-user-role'] ); ?>>
+							</td>
+						</tr>
+
+						<tr valign="top">
+							<th scope="row">Send user website?</th>
+							<td>
+								<input name="ll-intercom[send-user-url]" type="checkbox" value="1" <?php checked( $opts['send-user-url'] ); ?>>
+							</td>
+						</tr>
+
+					</tbody>
+
+				</table>
+
+				<p class="submit">
+					<input class="button-primary" name="ll-intercom-submit" type="submit" value="Save Settings">
+				</p>
+
+			</form>
+
 		</div>
+
 		<div class="postbox-container" style="width:20%;">
 
 			<div class="metabox-holder">
@@ -242,18 +442,21 @@ class lumpyIntercom {
 					</div>
 				</div>
 
-<!--
 				<div class="meta-box-sortables" style="min-height:0;">
-					<div class="postbox ll-intercom-info" id="ll-intercom-fb">
-						<h3 class="hndle"><span>News &amp; Updates</span></h3>
+					<div class="postbox ll-intercom-info" id="ll-intercom-suggest">
+						<h3 class="hndle"><span>Like this Plugin?</span></h3>
 						<div class="inside">
+							<p>If this plugin has helped you improve your customer relationships, please consider supporting it:</p>
 							<ul>
-								<li>Follow the <a href="#">Intercom for WordPress Facebook page</a> for news, updates, details of new releases, etc.</li>
+								<li><a href="http://wordpress.org/extend/plugins/intercom-for-wordpress/">Rate it and let other people know it works</a>.</li>
+								<li>Link to it or share it on Twitter or Facebook.</li>
+								<li>Write a review on your website or blog.</li>
+								<li><a href="https://twitter.com/lumpysimon">Follow me on Twitter</a></li>
+								<li><a href="http://lumpylemon.co.uk/">Commission me</a> for WordPress development, plugin or design work.</li>
 							</ul>
 						</div>
 					</div>
 				</div>
--->
 
 			</div>
 
@@ -265,109 +468,45 @@ class lumpyIntercom {
 
 
 
+	/**
+	 * use the WordPress settings API to initiate the various settings
+	 * and if it's a network settings page then validate & update any submitted settings
+	 * @return null
+	 */
 	function settings_init() {
 
 		register_setting( 'intercom', 'll-intercom', array( $this, 'validate' ) );
 
-		add_settings_section( 'intercom', 'Intercom Options', array( $this, 'settings_text' ), 'intercom' );
+		if ( isset( $_REQUEST['_wpnonce'] ) and wp_verify_nonce( $_REQUEST['_wpnonce'], 'intercom' ) ) {
 
-		add_settings_field( 'intercom-app-id',         'App ID',            array( $this, 'setting_app_id'         ), 'intercom', 'intercom' );
-		add_settings_field( 'intercom-secure',         'Security key',      array( $this, 'setting_secure'         ), 'intercom', 'intercom' );
-		add_settings_field( 'intercom-label',          'Label',             array( $this, 'setting_label'          ), 'intercom', 'intercom' );
-		add_settings_field( 'intercom-username',       'Username format',   array( $this, 'setting_username'       ), 'intercom', 'intercom' );
-		add_settings_field( 'intercom-send-user-role', 'Send user role',    array( $this, 'setting_send_user_role' ), 'intercom', 'intercom' );
-		add_settings_field( 'intercom-send-user-id',   'Send user ID',      array( $this, 'setting_send_user_id'   ), 'intercom', 'intercom' );
-		add_settings_field( 'intercom-send-user-url',  'Send user website', array( $this, 'setting_send_user_url'  ), 'intercom', 'intercom' );
+			$file = is_network_admin() ? 'settings.php' : 'options-general.php';
 
-	}
+			if ( isset( $_POST['ll-intercom-submit'] ) and is_network_admin() ) {
+				$opts = self::validate( $_POST['ll-intercom'] );
+				self::update_settings( $opts );
+				wp_redirect( add_query_var( array(
+												'page' => 'intercom',
+												'updated' => true
+												), $file ) );
+				die();
+			}
 
-
-
-	function settings_text() {
-
-		echo '<p>Intercom CRM integration settings</p>';
+		}
 
 	}
 
 
 
-	function setting_app_id() {
-
-		$opts = get_option( 'll-intercom' );
-
-		echo '<input name="ll-intercom[app-id]" type="text" value="' . esc_attr( $opts['app-id'] ) . '">';
-
-	}
-
-
-
-	function setting_secure() {
-
-		$opts = get_option( 'll-intercom' );
-
-		echo '<input name="ll-intercom[secure]" type="text" value="' . esc_attr( $opts['secure'] ) . '">';
-
-	}
-
-
-
-	function setting_label() {
-
-		$opts = get_option( 'll-intercom' );
-
-		echo '<input name="ll-intercom[label]" type="text" value="' . esc_attr( $opts['label'] ) . '">';
-
-	}
-
-
-
-	function setting_username() {
-
-		$opts = get_option( 'll-intercom' );
-
-		echo '<label title="firstlast"><input name="ll-intercom[username]" type="radio" value="firstlast" ' . checked( $opts['username'], 'firstlast', false ) . '> <span>First name &amp; last name</span></label><br>';
-		echo '<label title="display"><input name="ll-intercom[username]" type="radio" value="display" ' . checked( $opts['username'], 'display', false ) . '> <span>Display name</span></label>';
-
-	}
-
-
-
-	function setting_send_user_role() {
-
-		$opts = get_option( 'll-intercom' );
-
-		echo '<input name="ll-intercom[send-user-role]" type="checkbox" value="1" ' . checked( $opts['send-user-role'], 1, false ) . '>';
-
-	}
-
-
-
-	function setting_send_user_id() {
-
-		$opts = get_option( 'll-intercom' );
-
-		echo '<input name="ll-intercom[send-user-id]" type="checkbox" value="1" ' . checked( $opts['send-user-id'], 1, false ) . '>';
-
-	}
-
-
-
-	function setting_send_user_url() {
-
-		$opts = get_option( 'll-intercom' );
-
-		echo '<input name="ll-intercom[send-user-url]" type="checkbox" value="1" ' . checked( $opts['send-user-url'], 1, false ) . '>';
-
-	}
-
-
-
+	/**
+	 * make sure that no dodgy stuff is trying to sneak through
+	 * @param  array $input options to validate
+	 * @return array        validated options
+	 */
 	function validate( $input ) {
 
-		$new['app-id']         = wp_kses( trim( $input['app-id'] ) );
-		$new['secure']         = wp_kses( trim( $input['secure'] ) );
-		$new['label']          = wp_kses( trim( $input['label'] ) );
-		$new['username']       = wp_kses( trim( $input['username'] ) );
+		$new['app-id']         = wp_kses( trim( $input['app-id'] ), array() );
+		$new['secure']         = wp_kses( trim( $input['secure'] ), array() );
+		$new['username']       = wp_kses( trim( $input['username'] ), array() );
 		$new['send-user-role'] = absint( $input['send-user-role'] );
 		$new['send-user-id']   = absint( $input['send-user-id'] );
 		$new['send-user-url']  = absint( $input['send-user-url'] );
@@ -381,6 +520,8 @@ class lumpyIntercom {
 }
 
 
+
+// let's go!
 
 $lumpy_intercom = new lumpyIntercom;
 
