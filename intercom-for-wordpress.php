@@ -4,8 +4,8 @@ Plugin Name: Intercom for WordPress
 Plugin URI: http://lumpylemon.co.uk/plugins/intercom-crm-for-wordpress
 Description: Integrate the <a href="http://intercom.io">Intercom</a> CRM and messaging app into your WordPress website.
 Author: Simon Blackbourn
-Author URI: http://lumpylemon.co.uk
-Version: 0.3.1
+Author URI: https://twitter.com/lumpysimon
+Version: 0.4
 
 
 
@@ -51,7 +51,7 @@ Version: 0.3.1
 
 
 
-define( 'LL_INTERCOM_VERSION', '0.3.1' );
+define( 'LL_INTERCOM_VERSION', '0.4' );
 
 
 
@@ -106,7 +106,7 @@ class lumpyIntercom {
 
 
 	/**
-	 * checks if this plugin is activated network-wide
+	 * check if this plugin is activated network-wide
 	 * @return boolean
 	 */
 	function is_network_active() {
@@ -124,7 +124,7 @@ class lumpyIntercom {
 
 
 	/**
-	 * retrieves the intercom options
+	 * retrieve the intercom options
 	 * @return array 'll-intercom' options
 	 */
 	function get_settings() {
@@ -163,6 +163,7 @@ class lumpyIntercom {
 
 		// don't do anything if the current user is hidden from intercom
 		// or is not logged in
+
 		if ( current_user_can( 'hide_from_intercom' ) or !is_user_logged_in() )
 			return;
 
@@ -190,7 +191,6 @@ class lumpyIntercom {
 
 		$secure = false;
 		if ( isset( $opts['secure'] ) and !empty( $opts['secure'] ) ) {
-			// $secure = sha1( $opts['secure'] . $current_user->user_email );
 			$secure = hash_hmac( 'sha256', $current_user->user_email, $opts['secure'] );
 		}
 
@@ -219,11 +219,15 @@ class lumpyIntercom {
 			$custom[] = '"Website":"' . $current_user->user_url . '"';
 		}
 
+		// allow plugins/themes to add their own custom data
+
+		$custom = apply_filters( 'll_intercom_custom_data', $custom );
+
 		// now put everything together & generate the javascript output
 
 		$out  = '<script id="IntercomSettingsScriptTag">';
 		$out .= '// Intercom for WordPress | v' . LL_INTERCOM_VERSION . ' | http://lumpylemon.co.uk/plugins/intercom-crm-for-wordpress' . "\n";
-		$out .= 'var intercomSettings = {';
+		$out .= 'window.intercomSettings = {';
 		$out .= 'app_id:"' . esc_attr( $opts['app-id'] ) . '",';
 		$out .= 'email:"' . $current_user->user_email . '",';
 		$out .= 'name:"' . $username . '",';
@@ -242,7 +246,7 @@ class lumpyIntercom {
 		}
 		$out .= '};' . "\n";
 		$out .= '</script>' . "\n";
-		$out .= '<script>(function(){var w=window;var d=document;var i=function(){i.c(arguments)};i.q=[];i.c=function(args){i.q.push(args)};w.Intercom=i;function l(){var s=d.createElement(\'script\');s.type=\'text/javascript\';s.async=true;s.src=\'https://api.intercom.io/api/js/library.js\';var x=d.getElementsByTagName(\'script\')[0];x.parentNode.insertBefore(s,x);}if(w.attachEvent){w.attachEvent(\'onload\',l);}else{w.addEventListener(\'load\',l,false);}})();</script>' . "\n";
+		$out .= '<script>(function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic(\'reattach_activator\');ic(\'update\',intercomSettings);}else{var d=document;var i=function(){i.c(arguments)};i.q=[];i.c=function(args){i.q.push(args)};w.Intercom=i;function l(){var s=d.createElement(\'script\');s.type=\'text/javascript\';s.async=true;s.src=\'https://api.intercom.io/api/js/library.js\';var x=d.getElementsByTagName(\'script\')[0];x.parentNode.insertBefore(s,x);}if(w.attachEvent){w.attachEvent(\'onload\',l);}else{w.addEventListener(\'load\',l,false);}};})()</script>' . "\n";
 
 		echo $out;
 
@@ -287,8 +291,6 @@ class lumpyIntercom {
 
 
 
-	// does what it says on the tin
-
 	/**
 	 * create the relevant type of options page
 	 * depending if we're single site or network active
@@ -327,7 +329,7 @@ class lumpyIntercom {
 
 
 	/**
-	 * generate the options page
+	 * output the options page
 	 * @return null
 	 */
 	function render_options_page() {
@@ -470,9 +472,9 @@ class lumpyIntercom {
 				$opts = self::validate( $_POST['ll-intercom'] );
 				self::update_settings( $opts );
 				wp_redirect( add_query_arg( array(
-												'page' => 'intercom',
-												'updated' => true
-												), $file ) );
+					'page' => 'intercom',
+					'updated' => true
+					), $file ) );
 				die();
 			}
 

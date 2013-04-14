@@ -53,6 +53,10 @@ Possibly, but I've not tried. I can only provide support if you're using WordPre
 
 == Changelog ==
 
+= 0.4 =
+* Use latest version of the install code
+* Add filter (ll_intercom_custom_data) so plugins/themes can add their own custom data
+
 = 0.3.1 =
 * Fix Multisite network-activated options saving bug
 * Remove default options
