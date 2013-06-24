@@ -3,7 +3,7 @@ Contributors: lumpysimon
 Donate link: http://lumpylemon.co.uk/donate
 Tags: intercom, intercom.io, crm, messaging, contact form, support, email, feedback, customer relationship management
 Requires at least: 3.3
-Tested up to: 3.5
+Tested up to: 3.5.2
 Stable tag: trunk
 
 Easy integration of the Intercom CRM and messaging app into your WordPress website.
@@ -49,9 +49,13 @@ Possibly, but I've not tried. I can only provide support if you're using WordPre
 3. Go to the settings page.
 4. Enter your Intercom App ID.
 5. Highly recommended! Enable secure mode in Intercom and enter your security key in the settings screen (it's a combination of letters and numbers, similar to your App ID).
-6. Choose your preferred username format and optional custom data.
+6. Choose your preferred username format, optional custom data and whether to track admin pages.
 
 == Changelog ==
+
+= 0.5 =
+* Add option to allow tracking of admin pages (off by default)
+* Update install code to load JavaScript from CDN
 
 = 0.4 =
 * Use latest version of the install code

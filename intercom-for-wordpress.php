@@ -5,7 +5,7 @@ Plugin URI: http://lumpylemon.co.uk/plugins/intercom-crm-for-wordpress
 Description: Integrate the <a href="http://intercom.io">Intercom</a> CRM and messaging app into your WordPress website.
 Author: Simon Blackbourn
 Author URI: https://twitter.com/lumpysimon
-Version: 0.4
+Version: 0.5
 
 
 
@@ -15,7 +15,7 @@ Version: 0.4
 
 	Intercom is a customer relationship management (CRM) and messaging tool for web app owners. WordPress is being widely used as a web app nowadays, so Intercom is an ideal companion app to find out more about your users, contact them, get their instant feedback, and track your relationship with them over time so you can spot those who need attention.
 
-	This plugin generates the Javascript install code to integrate all of this functionality into your WordPress-powered web app.
+	This plugin generates the Javascript install code to integrate all of this functionality into your WordPress-powered web app, so you can track and communicate with your users both on the front-end and on your admin pages.
 
 	It allows you to securely connect to Intercom using secure key authentication mode, and you can optionally send extra custom data about your users.
 
@@ -51,11 +51,11 @@ Version: 0.4
 
 
 
-define( 'LL_INTERCOM_VERSION', '0.4' );
+define( 'LL_INTERCOM_VERSION', '0.5' );
 
 
 
-class lumpyIntercom {
+class lumpy_intercom {
 
 
 
@@ -64,12 +64,13 @@ class lumpyIntercom {
 		register_activation_hook(   __FILE__, array( $this, 'hello'   ) );
 		register_deactivation_hook( __FILE__, array( $this, 'goodbye' ) );
 
-		add_action( 'wp_footer',             array( $this, 'output_install_code' ) );
-		add_action( 'admin_menu',            array( $this, 'create_options_page' ) );
-		add_action( 'network_admin_menu',    array( $this, 'create_options_page' ) );
-		add_action( 'admin_init',            array( $this, 'settings_init'       ) );
-		add_action( 'admin_notices',         array( $this, 'notice'              ) );
-		add_action( 'network_admin_notices', array( $this, 'notice'              ) );
+		add_action( 'wp_footer',             array( $this, 'output_install_code'       ) );
+		add_action( 'admin_footer',          array( $this, 'output_admin_install_code' ) );
+		add_action( 'admin_menu',            array( $this, 'create_options_page'       ) );
+		add_action( 'network_admin_menu',    array( $this, 'create_options_page'       ) );
+		add_action( 'admin_init',            array( $this, 'settings_init'             ) );
+		add_action( 'admin_notices',         array( $this, 'notice'                    ) );
+		add_action( 'network_admin_notices', array( $this, 'notice'                    ) );
 
 	}
 
@@ -246,9 +247,25 @@ class lumpyIntercom {
 		}
 		$out .= '};' . "\n";
 		$out .= '</script>' . "\n";
-		$out .= '<script>(function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic(\'reattach_activator\');ic(\'update\',intercomSettings);}else{var d=document;var i=function(){i.c(arguments)};i.q=[];i.c=function(args){i.q.push(args)};w.Intercom=i;function l(){var s=d.createElement(\'script\');s.type=\'text/javascript\';s.async=true;s.src=\'https://api.intercom.io/api/js/library.js\';var x=d.getElementsByTagName(\'script\')[0];x.parentNode.insertBefore(s,x);}if(w.attachEvent){w.attachEvent(\'onload\',l);}else{w.addEventListener(\'load\',l,false);}};})()</script>' . "\n";
+		$out .= '<script>(function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic(\'reattach_activator\');ic(\'update\',intercomSettings);}else{var d=document;var i=function(){i.c(arguments)};i.q=[];i.c=function(args){i.q.push(args)};w.Intercom=i;function l(){var s=d.createElement(\'script\');s.type=\'text/javascript\';s.async=true;s.src=\'https://static.intercomcdn.com/intercom.v1.js\';var x=d.getElementsByTagName(\'script\')[0];x.parentNode.insertBefore(s,x);}if(w.attachEvent){w.attachEvent(\'onload\',l);}else{w.addEventListener(\'load\',l,false);}};})()</script>' . "\n";
 
 		echo $out;
+
+	}
+
+
+
+	/**
+	 * check the options and if required output the install code in the admin footer
+	 * @return null
+	 */
+	function output_admin_install_code() {
+
+		$opts = self::get_settings();
+
+		if ( $opts['show-in-admin'] ) {
+			self::output_install_code();
+		}
 
 	}
 
@@ -404,6 +421,13 @@ class lumpyIntercom {
 							</td>
 						</tr>
 
+						<tr valign="top">
+							<th scope="row">Show on admin pages?</th>
+							<td>
+								<input name="ll-intercom[show-in-admin]" type="checkbox" value="1" <?php checked( $opts['show-in-admin'] ); ?>>
+							</td>
+						</tr>
+
 					</tbody>
 
 				</table>
@@ -497,6 +521,7 @@ class lumpyIntercom {
 		$new['send-user-role'] = absint( $input['send-user-role'] );
 		$new['send-user-id']   = absint( $input['send-user-id'] );
 		$new['send-user-url']  = absint( $input['send-user-url'] );
+		$new['show-in-admin']  = absint( $input['show-in-admin'] );
 
 		return $new;
 
@@ -510,8 +535,4 @@ class lumpyIntercom {
 
 // let's go!
 
-$lumpy_intercom = new lumpyIntercom;
-
-
-
-?>
+$lumpy_intercom = new lumpy_intercom;
