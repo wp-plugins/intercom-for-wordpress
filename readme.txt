@@ -14,7 +14,11 @@ Easy integration of the Intercom CRM and messaging app into your WordPress websi
 
 This plugin generates the Javascript install code to integrate all of this functionality into your WordPress-powered web app.
 
-It allows you to securely connect to Intercom using secure key authentication mode, and you can optionally send extra custom data about your users.
+You can also optionally send extra custom data about your users.
+
+= Important! =
+
+Intercom have now made "secure mode" mandatory, so as of version 0.6 this plugin will only output the install code if you have entered both your app ID and your secret key. If you are upgrading from an earlier version and you are not using secure mode, please make sure you enter your secret key otherwise your users will not be tracked.
 
 == Frequently Asked Questions ==
 
@@ -26,9 +30,9 @@ Take a look at http://intercom.io, they explain it better than I can!
 
 No, it only tracks logged-in users. The administrator is not tracked.
 
-= Can I use private key authentication (user hash)? =
+= Are Intercom and this plugin secure? =
 
-Absolutely! In fact this is highly recommended for security reasons.
+Intercom's "secure mode" is now mandatory. This plugin uses your Intercom secret key to generate a 'hash' with every request - this prevents users maliciously sending messages as another user. If you do not enter your secret key in the settings screen, this plugin will do nothing.
 
 = Can I choose the format of the username sent to Intercom? =
 
@@ -40,7 +44,7 @@ Yes, if you wish you can send the user's role, ID and website URL.
 
 = Does this plugin work on older versions of WordPress or PHP? =
 
-Possibly, but I've not tried. I can only provide support if you're using WordPress 3.5 or newer and PHP 5.2.4 or newer.
+Possibly, but I've not tried. I can only provide support if you're using the latest version of this plugin together with WordPress 3.5 or newer and PHP 5.2.4 or newer.
 
 == Installation ==
 
@@ -48,10 +52,14 @@ Possibly, but I've not tried. I can only provide support if you're using WordPre
 2. Activate the plugin through the Plugins menu in WordPress.
 3. Go to the settings page.
 4. Enter your Intercom App ID.
-5. Highly recommended! Enable secure mode in Intercom and enter your security key in the settings screen (it's a combination of letters and numbers, similar to your App ID).
+5. Enable secure mode in Intercom and enter your secret key in the settings screen (it's a combination of letters and numbers, similar to your App ID).
 6. Choose your preferred username format, optional custom data and whether to track admin pages.
 
 == Changelog ==
+
+= 0.6 =
+* Make the secret key field mandatory and do not output the install code if it is not set
+* Remove redundant code that was generating a PHP notice
 
 = 0.5 =
 * Add option to allow tracking of admin pages (off by default)

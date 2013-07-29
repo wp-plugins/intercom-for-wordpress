@@ -5,7 +5,7 @@ Plugin URI: http://lumpylemon.co.uk/plugins/intercom-crm-for-wordpress
 Description: Integrate the <a href="http://intercom.io">Intercom</a> CRM and messaging app into your WordPress website.
 Author: Simon Blackbourn
 Author URI: https://twitter.com/lumpysimon
-Version: 0.5
+Version: 0.6
 
 
 
@@ -41,7 +41,7 @@ Version: 0.5
 	about me
 	--------
 
-	I'm Simon Blackbourn, co-founder of Lumpy Lemon, a small & friendly UK-based WordPress design & development company specialising in custom-built WordPress CMS sites. I work mainly, but not exclusively, with not-for-profit organisations.
+	I'm Simon Blackbourn, co-founder of Lumpy Lemon, a friendly UK-based WordPress design & development company specialising in custom-built WordPress CMS sites. I work mainly, but not exclusively, with not-for-profit organisations.
 
 	Find me on Twitter, Skype & GitHub: lumpysimon
 
@@ -51,11 +51,35 @@ Version: 0.5
 
 
 
-define( 'LL_INTERCOM_VERSION', '0.5' );
+defined( 'ABSPATH' ) or die();
 
 
 
-class lumpy_intercom {
+define( 'LL_INTERCOM_VERSION', '0.6' );
+
+
+
+ll_intercom::get_instance();
+
+
+
+class ll_intercom {
+
+
+
+	private static $instance = null;
+
+
+
+	public static function get_instance() {
+
+		if ( null == self::$instance ) {
+			self::$instance = new self;
+		}
+
+		return self::$instance;
+
+	}
 
 
 
@@ -162,17 +186,22 @@ class lumpy_intercom {
 	 */
 	function output_install_code() {
 
+		global $current_user;
+
 		// don't do anything if the current user is hidden from intercom
 		// or is not logged in
 
 		if ( current_user_can( 'hide_from_intercom' ) or !is_user_logged_in() )
 			return;
 
-		global $current_user;
+		$opts = self::get_settings();
+
+		// don't do anything if the app id and secret key fields have not been set
+
+		if ( !isset( $opts['app-id'] ) or !isset( $opts['secure'] ) or empty( $opts['app-id'] ) or empty( $opts['secure'] ) )
+			return;
 
 		get_currentuserinfo();
-
-		$opts = self::get_settings();
 
 		// if we're sending the user role as custom data then
 		// figure out the current user's role
@@ -187,13 +216,9 @@ class lumpy_intercom {
 			}
 		}
 
-		// if a security key has been entered
-		// then calculate the hash
+		// calculate the security hash
 
-		$secure = false;
-		if ( isset( $opts['secure'] ) and !empty( $opts['secure'] ) ) {
-			$secure = hash_hmac( 'sha256', $current_user->user_email, $opts['secure'] );
-		}
+		$hash = hash_hmac( 'sha256', $current_user->user_email, $opts['secure'] );
 
 		// set the required username format
 
@@ -233,9 +258,7 @@ class lumpy_intercom {
 		$out .= 'email:"' . $current_user->user_email . '",';
 		$out .= 'name:"' . $username . '",';
 		$out .= 'created_at:' . strtotime( $current_user->user_registered ) . ',';
-		if ( $secure ) {
-			$out .= 'user_hash:"' . $secure . '",';
-		}
+		$out .= 'user_hash:"' . $hash . '",';
 		$out .= 'widget:{';
 		$out .= 'activator:"#IntercomDefaultWidget"';
 		$out .= '}';
@@ -273,7 +296,7 @@ class lumpy_intercom {
 
 	/**
 	 * show a 'settings saved' notice
-	 * and a friendly reminder if the app ID hasn't been entered
+	 * and a friendly reminder if the app ID or secret key haven't been entered
 	 * @return null
 	 */
 	function notice() {
@@ -294,10 +317,10 @@ class lumpy_intercom {
 
 		$opts = self::get_settings();
 
-		if ( !is_network_admin() and ( !isset( $opts['app-id'] ) or empty( $opts['app-id'] ) ) ) {
-			echo '<div class="error" id="ll-intercom-notice"><p><img src="' . $this->warning . '"> <strong>Intercom needs some attention</strong>. ';
+		if ( !is_network_admin() and ( !isset( $opts['app-id'] ) or empty( $opts['app-id'] ) or !isset( $opts['secure'] ) or empty( $opts['secure'] ) ) ) {
+			echo '<div class="error" id="ll-intercom-notice"><p><strong>Intercom needs some attention</strong>. ';
 			if ( isset( $_GET['page'] ) and 'intercom' == $_GET['page'] ) {
-				echo 'Please enter your Intercom application ID';
+				echo 'Please enter your Intercom application ID and secret key';
 			} else {
 				echo 'Please <a href="options-general.php?page=intercom">configure the Intercom settings</a>';
 			}
@@ -379,7 +402,7 @@ class lumpy_intercom {
 						</tr>
 
 						<tr valign="top">
-							<th scope="row">Security key</th>
+							<th scope="row">Secret key</th>
 							<td>
 								<input name="ll-intercom[secure]" type="text" value="<?php echo esc_attr( $opts['secure'] ); ?>">
 							</td>
@@ -517,7 +540,7 @@ class lumpy_intercom {
 
 		$new['app-id']         = wp_kses( trim( $input['app-id'] ), array() );
 		$new['secure']         = wp_kses( trim( $input['secure'] ), array() );
-		$new['username']       = wp_kses( trim( $input['username'] ), array() );
+		$new['username']       = isset( $input['username'] ) ? wp_kses( trim( $input['username'] ), array() ) : 'firstlast';
 		$new['send-user-role'] = absint( $input['send-user-role'] );
 		$new['send-user-id']   = absint( $input['send-user-id'] );
 		$new['send-user-url']  = absint( $input['send-user-url'] );
@@ -530,9 +553,3 @@ class lumpy_intercom {
 
 
 }
-
-
-
-// let's go!
-
-$lumpy_intercom = new lumpy_intercom;
