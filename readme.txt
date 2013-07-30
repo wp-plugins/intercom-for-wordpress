@@ -3,7 +3,7 @@ Contributors: lumpysimon
 Donate link: http://lumpylemon.co.uk/donate
 Tags: intercom, intercom.io, crm, messaging, contact form, support, email, feedback, customer relationship management
 Requires at least: 3.3
-Tested up to: 3.5.2
+Tested up to: 3.6
 Stable tag: trunk
 
 Easy integration of the Intercom CRM and messaging app into your WordPress website.
@@ -60,6 +60,7 @@ Possibly, but I've not tried. I can only provide support if you're using the lat
 = 0.6 =
 * Make the secret key field mandatory and do not output the install code if it is not set
 * Remove redundant code that was generating a PHP notice
+* Tested for compatibility with WordPress 3.6
 
 = 0.5 =
 * Add option to allow tracking of admin pages (off by default)
