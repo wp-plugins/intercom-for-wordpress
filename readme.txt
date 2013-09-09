@@ -1,8 +1,8 @@
 === Intercom for WordPress ===
 Contributors: lumpysimon
 Donate link: http://lumpylemon.co.uk/donate
-Tags: intercom, intercom.io, crm, messaging, contact form, support, email, feedback, customer relationship management
-Requires at least: 3.3
+Tags: intercom, intercom.io, crm, messaging, contact form, support, email, feedback, customer relationship management, users
+Requires at least: 3.5
 Tested up to: 3.6
 Stable tag: trunk
 
@@ -18,7 +18,9 @@ You can also optionally send extra custom data about your users.
 
 = Important! =
 
-Intercom have now made "secure mode" mandatory, so as of version 0.6 this plugin will only output the install code if you have entered both your app ID and your secret key. If you are upgrading from an earlier version and you are not using secure mode, please make sure you enter your secret key otherwise your users will not be tracked.
+As of version 0.7 the "ll_intercom_custom_data" filter is not backwards compatible with earlier versions. Please see "Can I add my own custom data?" on the [FAQ page](http://wordpress.org/plugins/intercom-for-wordpress/faq) for instructions.
+
+"Secure mode" is mandatory as of version 0.6. You must enter both your app ID and your secret key. If you are upgrading from an earlier version where you didn't use secure mode, you will now need to enter your secret key otherwise your users will not be tracked.
 
 == Frequently Asked Questions ==
 
@@ -30,17 +32,68 @@ Take a look at http://intercom.io, they explain it better than I can!
 
 No, it only tracks logged-in users. The administrator is not tracked.
 
-= Are Intercom and this plugin secure? =
+= How do I exclude other user roles from being tracked? =
 
-Intercom's "secure mode" is now mandatory. This plugin uses your Intercom secret key to generate a 'hash' with every request - this prevents users maliciously sending messages as another user. If you do not enter your secret key in the settings screen, this plugin will do nothing.
+Simply add the `hide_from_intercom` capability to the user role.
+
+The following example will exclude editors, you should put this code in your theme's functions.php or a plugin:
+
+`
+$role = get_role( 'editor' );
+$role->add_cap( 'hide_from_intercom' );
+`
 
 = Can I choose the format of the username sent to Intercom? =
 
 Yes, you can choose between "Firstname Lastname" or the user's displayname.
 
-= Can I send other custom data? =
+= Can I send custom data? =
 
-Yes, if you wish you can send the user's role, ID and website URL.
+Yes, on the options screen you can choose to send the user's role and/or website URL.
+
+= Can I add my own custom data? =
+
+Yes, there is a filter called `ll_intercom_custom_data` that you can use to filter the `$custom` array. For each extra piece of custom data you wish to send, you should add a key => value array element (e.g. `Age => 42` ).
+
+Here's an example that sends the user's age based on the value in a usermeta field. This code should be placed in your theme's functions.php file or in a plugin:
+
+`
+add_filter( 'll_intercom_custom_data', 'my_intercom_data' );
+
+function my_intercom_data( $custom ) {
+
+	$user_id = get_current_user_id();
+
+	if ( $age = get_user_meta( $user_id, 'age', true ) ) {
+		$custom['Age'] = $age ;
+	}
+
+	return $custom;
+
+}
+`
+
+Make sure you read Intercom's [custom data documentation](http://docs.intercom.io/#CustomData).
+
+= Can I use my own activator link instead of the default Intercom one? =
+
+This plugin uses Intercom's default 'activator', but you can use your own one via the `ll_intercom_activator` filter.
+
+Here's an example that uses all links with the `my-activator` class:
+
+`
+add_filter( 'll_intercom_activator', 'my_intercom_activator' );
+
+function my_intercom_activator( $activator ) {
+
+	return '.my-activator';
+
+}
+`
+
+= Are Intercom and this plugin secure? =
+
+Intercom's "secure mode" is now mandatory. Your Intercom secret key is used to generate a 'hash' with every request - this prevents users maliciously sending messages as another user. If you do not enter your secret key in the settings screen, this plugin will do nothing.
 
 = Does this plugin work on older versions of WordPress or PHP? =
 
@@ -56,6 +109,11 @@ Possibly, but I've not tried. I can only provide support if you're using the lat
 6. Choose your preferred username format, optional custom data and whether to track admin pages.
 
 == Changelog ==
+
+= 0.7 =
+* Use json_encode for generating the install code (thanks to [John Blackbourn](http://profiles.wordpress.org/johnbillion))
+* Send user ID by default and remove from settings screen
+* Add ll_intercom_activator filter so plugins/themes can use their own link ID/class
 
 = 0.6 =
 * Make the secret key field mandatory and do not output the install code if it is not set
