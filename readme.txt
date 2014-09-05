@@ -3,7 +3,7 @@ Contributors: lumpysimon
 Donate link: http://lumpylemon.co.uk/donate
 Tags: intercom, intercom.io, crm, messaging, contact form, support, email, feedback, customer relationship management, users
 Requires at least: 3.8
-Tested up to: 3.8.1
+Tested up to: 4.0
 Stable tag: trunk
 
 Easy integration of the Intercom CRM and messaging app into your WordPress website.
