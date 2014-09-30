@@ -14,7 +14,7 @@ Easy integration of the Intercom CRM and messaging app into your WordPress websi
 
 This plugin generates the Javascript install code to integrate all of this functionality into your WordPress-powered web app.
 
-You can also optionally send extra custom data about your users (attributes), as well as company data.
+You can also optionally send extra custom data (attributes) about your users, as well as company data.
 
 == Frequently Asked Questions ==
 
