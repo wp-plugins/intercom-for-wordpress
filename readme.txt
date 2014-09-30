@@ -71,7 +71,7 @@ Make sure you read Intercom's [custom user attributes documentation](http://docs
 
 = Can I send company data? =
 
-Yes, you need to add this using the `ll_intercom_company_data` filter. This must be in the form of an array. Here's a simple example:
+Yes, you can add this using the `ll_intercom_company_data` filter. Your function should return the company data as an array. Here's a simple example:
 
 `
 add_filter( 'll_intercom_company_data', 'my_intercom_company_data' );
