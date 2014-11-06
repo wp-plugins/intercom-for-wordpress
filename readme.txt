@@ -109,7 +109,7 @@ function my_intercom_activator( $activator ) {
 
 = Are Intercom and this plugin secure? =
 
-It is highly recommended to enable Intercom's "secure mode". All communications between your website and Intercom will then use a secret key to generate a 'hash' with every request - this prevents users maliciously sending messages as another user.
+It is highly recommended to enable Intercom's "secure mode". All communications between your website and Intercom will then use a secret key to generate a 'hash' with every request - this prevents users maliciously sending messages as another user. Please read Intercom's [secure mode documentation](http://docs.intercom.io/configuring-Intercom/enable-secure-mode).
 
 = Does this plugin work on older versions of WordPress or PHP? =
 
@@ -125,6 +125,9 @@ Possibly, but I've not tried. I can only provide support if you're using the lat
 7. Highly recommended: for extra security, enable secure mode from within your Intercom app and enter your secret key in the settings page.
 
 == Changelog ==
+
+= 1.0 (6th November 2104) =
+* Improve the custom activator code so it doesn't override the 'Display messenger button' setting in Interom
 
 = 0.9 (30th September 2104) =
 * Add ll_intercom_company_data filter so plugins/themes can send company data
