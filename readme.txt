@@ -127,7 +127,7 @@ Possibly, but I've not tried. I can only provide support if you're using the lat
 == Changelog ==
 
 = 1.0 (6th November 2104) =
-* Improve the custom activator code so it doesn't override the 'Display messenger button' setting in Interom
+* Improve the custom activator code so it doesn't override the 'Display messenger button' setting in Intercom
 
 = 0.9 (30th September 2104) =
 * Add ll_intercom_company_data filter so plugins/themes can send company data
